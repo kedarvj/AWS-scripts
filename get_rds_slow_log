@@ -1,0 +1,52 @@
+
+# Script: get_rds_slow_log
+# Purpose: Download slow query log from AWS RDS and generate pt-query-digest
+# Usage: ./start_slow [YYYYMMDD]
+#
+# Requires:
+# - pt-query-digest
+#
+# Working:
+# - Create folder under SLOW_HOME with the DATE
+# - Download slow log for current date or the date specified
+# - Generate pt-query-digest 
+# 
+# ToDo:
+# - Email
+# - Config file
+#
+
+TODAY=`date "+%Y%m%d"`
+SLOW_HOME=/home/kedar/slowquery
+export AWS_PROFILE=kedar
+export AWS_DEFAULT_REGION=YOUR-REGION
+INSTANCE_ID="YOUR-INSTANCE-IDENTIFIERE"
+
+if [ $# -eq 0 ];
+then
+    echo "No arguments supplied"
+else
+    TODAY=$1;
+    echo "Assumed $1 as date."
+fi
+
+SLOW_LOG=mysql-slowquery$TODAY.log
+
+cd $SLOW_HOME
+mkdir -p $SLOW_HOME/$TODAY
+
+function downloadSlowLog () {
+  aws rds download-db-log-file-portion --output text --db-instance-identifier $INSTANCE_ID --log-file-name $1
+}
+
+echo "Downloading slow logs for $TODAY";
+downloadSlowLog slowquery/mysql-slowquery.log > $TODAY/$SLOW_LOG
+
+PART_DATE=`date -d $TODAY  '+%Y-%m-%d'`
+echo $PART_DATE
+for i in {00..09} {10..23}; do
+echo "downloading parts.. $i"
+  downloadSlowLog slowquery/mysql-slowquery.log.$PART_DATE.$i >>  $TODAY/$SLOW_LOG
+done
+echo "Generating digest"
+pt-query-digest $TODAY/$SLOW_LOG > $TODAY/digest_$TODAY
