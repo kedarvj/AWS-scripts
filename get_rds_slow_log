@@ -36,7 +36,8 @@ cd $SLOW_HOME
 mkdir -p $SLOW_HOME/$TODAY
 
 function downloadSlowLog () {
-  aws rds download-db-log-file-portion --output text --db-instance-identifier $INSTANCE_ID --log-file-name $1
+  export AWS_MAX_ATTEMPTS=100
+  aws rds download-db-log-file-portion --output text --db-instance-identifier $INSTANCE_ID --log-file-name $1 --starting-token 0
 }
 
 echo "Downloading slow logs for $TODAY";
