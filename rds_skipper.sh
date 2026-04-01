@@ -40,11 +40,12 @@ do
   SKIP_ERR_TXT==`$MYSQL -e"show replica status\G" | grep -i Last_SQL_Error`
   echo ""
   echo "seconds_behind_source : ${SBM}"
-  if [[ ${SBM} == 'NULL' ]]
+  if [[ -z "$SBM" || "$SBM" == "NULL" ]]
   then
   
     [ "$KDEBUG" == 1 ] && echo $SKIP_ERR_TXT
     [ "$KDEBUG" == 1 ] && echo $MATCH_TEXT
+    # Both Error Numner and Error texts are matched
     if [[ ",$ERRNO_TO_SKIP," == *",$LASTERRNUM,"* ]] && [[ $SKIP_ERR_TXT == *"$MATCH_TEXT"* ]]
     then
       echo "Replication is down, and error number and error text matches. Skipping error ${LASTERRNUM}"
