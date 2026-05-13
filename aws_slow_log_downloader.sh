@@ -361,10 +361,14 @@ download_for_date() {
         parallel --colsep '\|' -j "$PARALLEL_JOBS" \
             download_single_log {1} {2} {3} < "$tasks_file" >/dev/null || true
     elif [[ "$PARALLEL_JOBS" -gt 1 ]]; then
-        cat "$tasks_file" | xargs -P "$PARALLEL_JOBS" -I {} bash -c '
-            IFS="|" read -r log_name out_path mfest <<< "{}"
+        # Pass each task line as a positional argument ($1) instead of using
+        # -I {} replacement. BSD xargs (macOS) has a 255-byte replacement
+        # buffer for -I that overflows easily once paths get long; this form
+        # avoids the substitution entirely and works on both BSD and GNU xargs.
+        xargs -n 1 -P "$PARALLEL_JOBS" bash -c '
+            IFS="|" read -r log_name out_path mfest <<< "$1"
             download_single_log "$log_name" "$out_path" "$mfest"
-        ' >/dev/null || true
+        ' _ < "$tasks_file" >/dev/null || true
     else
         while IFS='|' read -r log_name out_path mfest; do
             download_single_log "$log_name" "$out_path" "$mfest" >/dev/null || true
