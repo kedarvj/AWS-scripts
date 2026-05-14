@@ -23,6 +23,22 @@
 #   SLOW_LOG_HOME     - Base directory for storing downloaded logs
 #   AWS_MAX_ATTEMPTS  - Max AWS API retry attempts
 #
+### Examples
+# Download the latest slow logs (auto-detects date from RDS)
+# ./download_rds_slow_logs.sh -i my-rds-instance
+
+# Download logs from a specific date through latest available
+# ./download_rds_slow_logs.sh -i my-rds-instance -d 20260415
+
+# Resume a previously interrupted download (just re-run the same command)
+# ./download_rds_slow_logs.sh -i my-rds-instance -d 20260415
+
+# Daemon mode: poll every 5 minutes, picks up new logs as they appear
+# ./download_rds_slow_logs.sh -i my-rds-instance -w 300
+
+# Daemon mode: start from a specific date, catch up, then keep watching
+# ./download_rds_slow_logs.sh -i my-rds-instance -d 20260415 -w 300
+
 
 set -euo pipefail
 
